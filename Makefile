@@ -10,7 +10,7 @@ JAVA_VERSION := $(shell lein with-profile +sysutils \
 TEST_SELECTOR := :java$(JAVA_VERSION)
 
 test:
-	lein with-profile +$(VERSION),+test test $(TEST_SELECTOR)
+	lein with-profile +$(VERSION),+fastlane,+test test $(TEST_SELECTOR)
 
 eastwood:
 	lein with-profile +$(VERSION),+eastwood eastwood

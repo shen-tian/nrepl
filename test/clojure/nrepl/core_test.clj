@@ -380,7 +380,7 @@
       (is (= {} (dissoc resp2 :value)))
       (is (= {:ns "user"} resp3))
       (is (= {:status #{:done}} resp4))))
-
+  #_
   (testing "interruptible"
     (let [eval-responses (->> (message session {:op :eval
                                                 :code (code (range))
