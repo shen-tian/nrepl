@@ -2,6 +2,7 @@
   (:require
    [clojure.main]
    [clojure.set :as set]
+   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.test :refer [are deftest is testing use-fixtures]]
    [nrepl.core :as nrepl :refer [client
@@ -19,6 +20,7 @@
    [nrepl.middleware.caught :as middleware.caught]
    [nrepl.middleware.print :as middleware.print]
    [nrepl.server :as server]
+   [nrepl.spec :as spec]
    [nrepl.transport :as transport])
   (:import
    (java.io File Writer)
@@ -84,6 +86,12 @@
              ~'repl-values (comp response-values ~'repl-eval)]
          ~@body))))
 
+(defn- validate-spec
+  [msg]
+  (if (s/valid? ::spec/message msg)
+    msg
+    (throw (Exception. (s/explain-str ::spec/message msg)))))
+
 (defn- clean-response
   "Cleans a response to help testing.
 
@@ -111,7 +119,8 @@
     (-> resp
         de-identify
         normalize-status
-        keywordize-truncated-keys)))
+        keywordize-truncated-keys
+        validate-spec)))
 
 (def-repl-test eval-literals
   (are [literal] (= (binding [*ns* (find-ns 'user)] ; needed for the ::keyword
