@@ -92,7 +92,7 @@
     msg
     (throw (Exception. (s/explain-str ::spec/message msg)))))
 
-(defn- clean-response
+(defn clean-response
   "Cleans a response to help testing.
 
   This manually coerces bencode responses to (close) to what the raw EDN
@@ -115,10 +115,16 @@
         (fn [resp]
           (if (contains? resp ::middleware.print/truncated-keys)
             (update resp ::middleware.print/truncated-keys #(mapv keyword %))
+            resp))
+        keywordize-ops
+        (fn [resp]
+          (if (contains? resp :op)
+            (update resp :op keyword)
             resp))]
     (-> resp
         de-identify
         normalize-status
+        keywordize-ops
         keywordize-truncated-keys
         validate-spec)))
 
@@ -187,7 +193,7 @@
              (select-keys [:status])))))
 
 (def-repl-test unknown-op
-  (is (= {:op "abc" :status #{:error :unknown-op :done}}
+  (is (= {:op :abc :status #{:error :unknown-op :done}}
          (-> (message timeout-client {:op :abc})
              combine-responses
              clean-response

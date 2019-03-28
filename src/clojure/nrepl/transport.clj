@@ -140,7 +140,8 @@
 (defn- write-shim
   [msg]
   (cond-> msg
-    (contains? msg :ops) (update :ops walk/keywordize-keys)))
+    (contains? msg :ops) (update :ops walk/keywordize-keys)
+    (contains? msg :op)  (update :op keyword)))
 
 (defn edn
   "Returns a Transport implementation that serializes messages
