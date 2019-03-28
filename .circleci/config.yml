@@ -1,58 +1,15 @@
 version: 2.1
 
 orbs:
-    clojure: lifecheq/clojure@0.0.1
+    clojure: lifecheq/clojure@dev:first
 
-jobs:
-
-  util_job:
-    description: |
-      Running utility commands/checks (linter etc.)
-      Always uses Java11 and Clojure 1.10
-    parameters:
-      steps:
-        type: steps
-    executor: clojure/openjdk11
-    environment:
-      VERSION: "1.10"
-    steps:
-      - checkout
-      - run:
-          name : Install make
-          command: |
-            sudo apt-get install make
-      - clojure/with_cache:
-          cache_version: "1.10"
-          steps: << parameters.steps >>
-
-
-  test_code:
-    description: |
-      Run tests against given version of JDK and Clojure
-    parameters:
-      jdk_version:
-        description: Version of JDK to test against
-        type: string
-      clojure_version:
-        description: Version of Clojure to test against
-        type: string
-    executor: clojure/<< parameters.jdk_version >>
-    environment:
-      VERSION: << parameters.clojure_version >>
-    steps:
-      - checkout
-      - clojure/with_cache:
-          cache_version: << parameters.clojure_version >>
-          steps:
-            - run:
-                name : Install make
-                command: |
-                  sudo apt-get install make
-            - run:
-                name: Running tests
-                command: make test
-            - store_test_results:
-                path: test-results
+test_steps: &test_steps
+  steps:
+    - run:
+        name: Running tests
+        command: make test
+    - store_test_results:
+        path: test-results
 
 # The ci-test-matrix does the following:
 #
@@ -79,10 +36,11 @@ workflows:
       #     name: Java 8, Clojure 1.9
       #     clojure_version: "1.9"
       #     jdk_version: openjdk8
-      - test_code:
+      - clojure/run_test:
           name: Java 8, Clojure 1.10
           clojure_version: "1.10"
           jdk_version: openjdk8
+          <<: *test_steps
       # - test_code:
       #     name: Java 8, Clojure master
       #     clojure_version: "master"
@@ -99,15 +57,16 @@ workflows:
       #     name: Java 11, Clojure 1.9
       #     clojure_version: "1.9"
       #     jdk_version: openjdk11
-      - test_code:
+      - clojure/run_test:
           name: Java 11, Clojure 1.10
           clojure_version: "1.10"
           jdk_version: openjdk11
+          <<: *test_steps
       # - test_code:
       #     name: Java 11, Clojure master
       #     clojure_version: "master"
       #     jdk_version: openjdk11
-      - util_job:
+      - clojure/run_test:
           name: Code Linting
           steps:
             - run:
