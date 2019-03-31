@@ -134,7 +134,7 @@
   (fn [{:keys [op session interrupt-id id transport] :as msg}]
     (let [{:keys [interrupt exec] session-id :id} (meta session)]
       (case op
-        "eval"
+        :eval
         (if-not (:code msg)
           (t/send transport (response-for msg :status #{:error :no-code :done}))
           (exec id
@@ -144,9 +144,9 @@
         (h msg)))))
 
 (set-descriptor! #'interruptible-eval
-                 {:requires #{"clone" "close" #'caught/wrap-caught  #'print/wrap-print}
+                 {:requires #{:clone :close #'caught/wrap-caught  #'print/wrap-print}
                   :expects #{}
-                  :handles {"eval"
+                  :handles {:eval
                             {:doc "Evaluates code. Note that unlike regular stream-based Clojure REPLs, nREPL's `:eval` short-circuits on first read error and will not try to read and execute the remaining code in the message."
                              :requires {"code" "The code to be evaluated."
                                         "session" "The ID of the session within which to evaluate the code."}

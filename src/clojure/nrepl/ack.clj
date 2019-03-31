@@ -31,7 +31,7 @@
 (defn handle-ack
   [h]
   (fn [{:keys [op port transport] :as msg}]
-    (if (not= op "ack")
+    (if (not= op :ack)
       (h msg)
       (try
         (deliver @ack-port-promise port)

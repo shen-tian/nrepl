@@ -184,7 +184,7 @@
                   (let [current @running]
                     (cond
                       (nil? current) :idle
-                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first 
+                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first
                            (compare-and-set! running current nil))
                       (do
                         (doto ^Thread @thread .interrupt .stop)
@@ -264,10 +264,10 @@
         (t/send transport (response-for msg :status #{:error :unknown-session :done}))
         (let [msg (assoc msg :session the-session)]
           (case op
-            "clone" (register-session msg)
-            "interrupt" (interrupt-session msg)
-            "close" (close-session msg)
-            "ls-sessions" (t/send transport (response-for msg :status :done
+            :clone (register-session msg)
+            :interrupt (interrupt-session msg)
+            :close (close-session msg)
+            :ls-sessions (t/send transport (response-for msg :status :done
                                                           :sessions (or (keys @sessions) [])))
             (h msg)))))))
 
@@ -277,12 +277,12 @@
                   :describe-fn (fn [{:keys [session] :as describe-msg}]
                                  (when (and session (instance? clojure.lang.Atom session))
                                    {:current-ns (-> @session (get #'*ns*) str)}))
-                  :handles {"clone"
+                  :handles {:clone
                             {:doc "Clones the current session, returning the ID of the newly-created session."
                              :requires {}
                              :optional {"session" "The ID of the session to be cloned; if not provided, a new session with default bindings is created, and mapped to the returned session ID."}
                              :returns {"new-session" "The ID of the new session."}}
-                            "interrupt"
+                            :interrupt
                             {:doc "Attempts to interrupt some executing request. When interruption succeeds, the thread used for execution is killed, and a new thread spawned for the session. While the session middleware ensures that Clojure dynamic bindings are preserved, other ThreadLocals are not. Hence, when running code intimately tied to the current thread identity, it is best to avoid interruptions."
                              :requires {"session" "The ID of the session used to start the request to be interrupted."}
                              :optional {"interrupt-id" "The opaque message ID sent with the request to be interrupted."}
@@ -290,12 +290,12 @@
 'session-idle' if the session is not currently executing any request
 'interrupt-id-mismatch' if the session is currently executing a request sent using a different ID than specified by the \"interrupt-id\" value
 'session-ephemeral' if the session is an ephemeral session"}}
-                            "close"
+                            :close
                             {:doc "Closes the specified session."
                              :requires {"session" "The ID of the session to be closed."}
                              :optional {}
                              :returns {}}
-                            "ls-sessions"
+                            :ls-sessions
                             {:doc "Lists the IDs of all active sessions."
                              :requires {}
                              :optional {}
@@ -310,12 +310,12 @@
   [h]
   (fn [{:keys [op stdin session transport] :as msg}]
     (cond
-      (= op "eval")
+      (= op :eval)
       (let [in (-> (meta session) ^LineNumberingPushbackReader (:stdin-reader))]
         (binding [*skipping-eol* true]
           (clojure.main/skip-if-eol in))
         (h msg))
-      (= op "stdin")
+      (= op :stdin)
       (let [q (-> (meta session) ^LinkedBlockingQueue (:input-queue))]
         (if (empty? stdin)
           (.put q -1)
@@ -327,8 +327,8 @@
 
 (set-descriptor! #'add-stdin
                  {:requires #{#'session}
-                  :expects #{"eval"}
-                  :handles {"stdin"
+                  :expects #{:eval}
+                  :handles {:stdin
                             {:doc "Add content from the value of \"stdin\" to *in* in the current session."
                              :requires {"stdin" "Content to add to *in*."}
                              :optional {}

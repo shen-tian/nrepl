@@ -77,10 +77,10 @@ be loaded."} file-contents (atom {}))
    middleware below it (such as interruptible-eval)."
   [h]
   (fn [{:keys [op file file-name file-path ^Transport transport] :as msg}]
-    (if (not= op "load-file")
+    (if (not= op :load-file)
       (h msg)
       (h (assoc (dissoc msg :file :file-name :file-path)
-                :op "eval"
+                :op :eval
                 :code ((if (thread-bound? #'load-file-code)
                          load-file-code
                          load-large-file-code)
@@ -97,8 +97,8 @@ be loaded."} file-contents (atom {}))
 
 (set-descriptor! #'wrap-load-file
                  {:requires #{#'caught/wrap-caught #'print/wrap-print}
-                  :expects #{"eval"}
-                  :handles {"load-file"
+                  :expects #{:eval}
+                  :handles {:load-file
                             {:doc "Loads a body of code, using supplied path and filename info to set source file and line number metadata. Delegates to underlying \"eval\" middleware/handler."
                              :requires {"file" "Full contents of a file of code."}
                              :optional (merge caught/wrap-caught-optional-arguments
@@ -108,5 +108,5 @@ be loaded."} file-contents (atom {}))
                              :returns (-> (meta #'eval/interruptible-eval)
                                           ::middleware/descriptor
                                           :handles
-                                          (get "eval")
+                                          (get :eval)
                                           :returns)}}})

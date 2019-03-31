@@ -34,7 +34,8 @@
 (def transport-fn->protocol
   "Add your transport-fn var here so it can be tested"
   {#'transport/bencode "nrepl"
-   #'transport/edn "nrepl+edn"})
+   #'transport/edn "nrepl+edn"
+   })
 
 ;; There is a profile that adds the fastlane dependency and test
 ;; its transports.
@@ -178,7 +179,7 @@
              (select-keys [:status])))))
 
 (def-repl-test unknown-op
-  (is (= {:op "abc" :status #{:error :unknown-op :done}}
+  (is (= {:op :abc :status #{:error :unknown-op :done}}
          (-> (message timeout-client {:op :abc})
              combine-responses
              clean-response
@@ -897,7 +898,7 @@
       (is (= false false-val)))))
 
 (def-repl-test interrupt-load-file
-  (let [resp (message session {:op "load-file"
+  (let [resp (message session {:op :load-file
                                :file (slurp (File. project-base-dir "load-file-test/nrepl/load_file_sample2.clj"))
                                :file-path "nrepl/load_file_sample2.clj"
                                :file-name "load_file_sample2.clj"})]

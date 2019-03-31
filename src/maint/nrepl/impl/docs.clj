@@ -116,7 +116,7 @@ use in e.g. wiki pages, github, etc."
 (defn generate-ops-info []
   (let [[local remote] (transport/piped-transports)
         handler (server/default-handler)
-        msg {:op "describe"
+        msg {:op :describe
              :verbose? "true"
              :id "1"}]
     (handler (assoc msg :transport remote))

@@ -11,7 +11,7 @@
 
 (def-repl-test load-code-with-debug-info
   (dorun (nrepl/message timeout-session
-                        {:op "load-file" :file "\n\n\n(defn function [])"}))
+                        {:op :load-file :file "\n\n\n(defn function [])"}))
   (is (contains?
        ;; different versions of Clojure use different default :file metadata
        #{[{:file "NO_SOURCE_PATH" :line 4}]
@@ -21,7 +21,7 @@
                      (-> #'function
                          meta
                          (select-keys [:file :line]))))))
-  (dorun (nrepl/message timeout-session {:op "load-file"
+  (dorun (nrepl/message timeout-session {:op :load-file
                                          :file "\n\n\n\n\n\n\n\n\n(defn afunction [])"
                                          :file-path "path/from/source/root.clj"
                                          :file-name "root.clj"}))
@@ -35,7 +35,7 @@
 (def-repl-test load-file-with-debug-info
   (dorun
    (nrepl/message timeout-session
-                  {:op "load-file"
+                  {:op :load-file
                    :file (slurp (File. project-base-dir "load-file-test/nrepl/load_file_sample.clj"))
                    :file-path "nrepl/load_file_sample.clj"
                    :file-name "load_file_sample.clj"}))
@@ -50,7 +50,7 @@
   (set! *print-length* 3)
   (set! *print-level* 3)
   (dorun
-   (nrepl/message session {:op "load-file"
+   (nrepl/message session {:op :load-file
                            :file "(def a (+ 1 (+ 2 (+ 3 (+ 4 (+ 5 6))))))
                                    (def b 2) (def c 3) (def ^{:internal true} d 4)"
                            :file-path "path/from/source/root.clj"
@@ -61,7 +61,7 @@
 (def-repl-test load-file-response-no-ns
   (is (not (contains? (nrepl/combine-responses
                        (nrepl/message session
-                                      {:op "load-file"
+                                      {:op :load-file
                                        :file "(ns foo) (def x 5)"
                                        :file-path "/path/to/source.clj"
                                        :file-name "source.clj"}))

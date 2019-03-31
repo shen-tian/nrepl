@@ -16,7 +16,7 @@
 (def-repl-test simple-describe
   (let [{{:keys [nrepl clojure java]} :versions
          ops :ops} (nrepl/combine-responses
-                    (nrepl/message timeout-client {:op "describe"}))]
+                    (nrepl/message timeout-client {:op :describe}))]
     (testing "versions"
       (when-not (every? #(contains? java %) [:major :minor :incremental :update])
         (println "Got less information out of `java.version` than we'd like:"
@@ -32,7 +32,7 @@
 (def-repl-test verbose-describe
   (let [{:keys [ops aux]} (nrepl/combine-responses
                            (nrepl/message timeout-client
-                                          {:op "describe" :verbose? "true"}))]
+                                          {:op :describe :verbose? "true"}))]
     (is (= op-names (set (keys ops))))
     (is (every? seq (map (comp :doc val) ops)))
     (is (= {:current-ns "user"} aux))))

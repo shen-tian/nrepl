@@ -13,7 +13,7 @@
 (defn- wrap-conj-descriptor
   [descriptor-map h]
   (fn [{:keys [op descriptors] :as msg}]
-    (h (if-not (= op "describe")
+    (h (if-not (= op :describe)
          msg
          (assoc msg :descriptors (merge descriptor-map descriptors))))))
 
@@ -24,7 +24,7 @@
   [middleware-var descriptor]
   (let [descriptor (-> descriptor
                        (assoc :implemented-by (-> middleware-var var-name symbol))
-                       (update-in [:expects] (fnil conj #{}) "describe"))]
+                       (update-in [:expects] (fnil conj #{}) :describe))]
     (alter-meta! middleware-var assoc ::descriptor descriptor)
     (alter-var-root middleware-var #(comp (partial wrap-conj-descriptor
                                                    {middleware-var descriptor}) %))))
@@ -45,7 +45,7 @@
 (defn wrap-describe
   [h]
   (fn [{:keys [op descriptors verbose? transport] :as msg}]
-    (if (= op "describe")
+    (if (= op :describe)
       (transport/send transport (misc/response-for msg
                                                    (merge
                                                     (when-let [aux (reduce
@@ -68,7 +68,7 @@
       (h msg))))
 
 (set-descriptor! #'wrap-describe
-                 {:handles {"describe"
+                 {:handles {:describe
                             {:doc "Produce a machine- and human-readable directory and documentation for the operations supported by an nREPL endpoint."
                              :requires {}
                              :optional {"verbose?" "Include informational detail for each \"op\"eration in the return message."}
@@ -77,7 +77,7 @@
                                        "aux" "Map of auxilliary data contributed by all of the active nREPL middleware via :describe-fn functions in their descriptors."}}}})
 ;; eliminate implicit expectation of "describe" handler; this is the only
 ;; special case introduced by the conj'ing of :expects "describe" by set-descriptor!
-(alter-meta! #'wrap-describe update-in [::descriptor :expects] disj "describe")
+(alter-meta! #'wrap-describe update-in [::descriptor :expects] disj :describe)
 
 (defn- dependencies
   [set start dir]

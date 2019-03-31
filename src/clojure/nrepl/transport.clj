@@ -90,6 +90,13 @@
          (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server"))
          (throw e#)))))
 
+(defn- normalized-read
+  [msg]
+  (let [keywordize-ops #(if (contains? % :op) (update % :op keyword) %)]
+   (-> msg
+       walk/keywordize-keys
+       keywordize-ops)))
+
 (defn bencode
   "Returns a Transport implementation that serializes messages
    over the given Socket or InputStream/OutputStream using bencode."
@@ -101,9 +108,9 @@
       #(let [payload (rethrow-on-disconnection s (bencode/read-bencode in))
              unencoded (<bytes (payload "-unencoded"))
              to-decode (apply dissoc payload "-unencoded" unencoded)]
-         (walk/keywordize-keys (merge (dissoc payload "-unencoded")
-                                      (when unencoded {"-unencoded" unencoded})
-                                      (<bytes to-decode))))
+         (normalized-read (merge (dissoc payload "-unencoded")
+                                 (when unencoded {"-unencoded" unencoded})
+                                 (<bytes to-decode))))
       #(rethrow-on-disconnection s
                                  (locking out
                                    (doto out
@@ -119,11 +126,6 @@
 ;; These two functions hide the fact that :op values are implemented as strings
 ;; internally, whereas we aspire for them to be keywords
 
-(defn- read-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :op) (update :op name)))
-
 (defn- write-shim
   [msg]
   (cond-> msg
@@ -137,7 +139,7 @@
    (let [in (java.io.PushbackReader. (io/reader in))
          out (io/writer out)]
      (fn-transport
-      #(rethrow-on-disconnection s (read-shim (edn/read in)))
+      #(rethrow-on-disconnection s (edn/read in))
       #(rethrow-on-disconnection s
                                  (locking out
                                    ;; TODO: The transport doesn't seem to work
@@ -169,9 +171,9 @@
                   (.write w (str @cns "=> ")))
          session-id (atom nil)
          read-msg #(let [code (read r)]
-                     (merge {:op "eval" :code [code] :ns @cns :id (str "eval" (uuid))}
+                     (merge {:op :eval :code [code] :ns @cns :id (str "eval" (uuid))}
                             (when @session-id {:session @session-id})))
-         read-seq (atom (cons {:op "clone"} (repeatedly read-msg)))
+         read-seq (atom (cons {:op :clone} (repeatedly read-msg)))
          write (fn [{:strs [out err value status ns new-session id] :as msg}]
                  (when new-session (reset! session-id new-session))
                  (when ns (reset! cns ns))
@@ -187,7 +189,7 @@
                  @head)]
      (fn-transport read write
                    (when s
-                     (swap! read-seq (partial cons {:session @session-id :op "close"}))
+                     (swap! read-seq (partial cons {:session @session-id :op :close}))
                      #(.close s))))))
 
 (defn tty-greeting

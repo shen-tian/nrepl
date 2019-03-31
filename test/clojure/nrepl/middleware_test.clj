@@ -32,12 +32,12 @@
       'interruptible-eval 'wrap-print))
 
   (let [n ^{::middleware/descriptor
-            {:expects #{"clone"} :requires #{}}} {:dummy :middleware2}
+            {:expects #{:clone} :requires #{}}} {:dummy :middleware2}
         m ^{::middleware/descriptor
-            {:expects #{"eval"} :requires #{n #'nrepl.middleware.print/wrap-print}}}
+            {:expects #{:eval} :requires #{n #'nrepl.middleware.print/wrap-print}}}
         {:dummy :middleware}
         q ^{::middleware/descriptor
-            {:expects #{} :requires #{"describe" "eval"}}} {:dummy :middleware3}
+            {:expects #{} :requires #{:describe :eval}}} {:dummy :middleware3}
         stack (indexed-stack (concat default-middlewares [m q n]))]
     ;(->> stack clojure.set/map-invert (into (sorted-map)) vals println)
     (are [before after] (< (stack before) (stack after))

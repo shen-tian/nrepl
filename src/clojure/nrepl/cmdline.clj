@@ -103,7 +103,7 @@ Exit:      Control+D or (exit) or (quit)"
        (let [input (read *in* false 'exit)]
          (if (done? input)
            (System/exit 0)
-           (do (doseq [res (nrepl/message client {:op "eval" :code (pr-str input)})]
+           (do (doseq [res (nrepl/message client {:op :eval :code (pr-str input)})]
                  (when (:value res) (value (:value res)))
                  (when (:out res) (out (:out res)))
                  (when (:err res) (err (:err res)))
