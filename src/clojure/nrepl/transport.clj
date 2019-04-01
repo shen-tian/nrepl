@@ -90,12 +90,17 @@
          (throw (SocketException. "The transport's socket appears to have lost its connection to the nREPL server"))
          (throw e#)))))
 
-(defn- normalized-read
+;; This fn takes a "strings only" message, and converts it to (the)
+;; canonical EDN format. This is required, as it restores information lost
+;; on the stringify-keywordize roundtrip that requires knowledge of the
+;; correct EDN spec
+
+(defn- normalized-msg
   [msg]
   (let [keywordize-ops #(if (contains? % :op) (update % :op keyword) %)]
-   (-> msg
-       walk/keywordize-keys
-       keywordize-ops)))
+    (-> msg
+        walk/keywordize-keys
+        keywordize-ops)))
 
 (defn bencode
   "Returns a Transport implementation that serializes messages
@@ -108,9 +113,9 @@
       #(let [payload (rethrow-on-disconnection s (bencode/read-bencode in))
              unencoded (<bytes (payload "-unencoded"))
              to-decode (apply dissoc payload "-unencoded" unencoded)]
-         (normalized-read (merge (dissoc payload "-unencoded")
-                                 (when unencoded {"-unencoded" unencoded})
-                                 (<bytes to-decode))))
+         (normalized-msg (merge (dissoc payload "-unencoded")
+                                (when unencoded {"-unencoded" unencoded})
+                                (<bytes to-decode))))
       #(rethrow-on-disconnection s
                                  (locking out
                                    (doto out
@@ -122,14 +127,6 @@
           (do
             (.close in)
             (.close out))))))))
-
-;; These two functions hide the fact that :op values are implemented as strings
-;; internally, whereas we aspire for them to be keywords
-
-(defn- write-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :ops) (update :ops walk/keywordize-keys)))
 
 (defn edn
   "Returns a Transport implementation that serializes messages
@@ -149,7 +146,7 @@
                                              *print-length*   nil
                                              *print-level*    nil]
                                      (doto out
-                                       (.write (str (write-shim %)))
+                                       (.write (str %))
                                        (.flush)))))
       (fn []
         (if s
