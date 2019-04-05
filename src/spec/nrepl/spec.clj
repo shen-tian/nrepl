@@ -84,7 +84,7 @@
 
 ;; List Sessions
 
-(s/def ::sessions (s/coll-of ::uuid-str))
+(s/def ::sessions (s/coll-of ::uuid-str :kind? set?))
 
 ;; Std In
 

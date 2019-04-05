@@ -150,7 +150,7 @@ Optional parameters::
 {blank}
 
 Returns::
-* `:sessions` A list of all available session IDs.
+* `:sessions` A set of all available session IDs.
 
 
 

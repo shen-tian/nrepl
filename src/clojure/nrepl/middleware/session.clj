@@ -184,7 +184,7 @@
                   (let [current @running]
                     (cond
                       (nil? current) :idle
-                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first 
+                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first
                            (compare-and-set! running current nil))
                       (do
                         (doto ^Thread @thread .interrupt .stop)
@@ -268,7 +268,7 @@
             "interrupt" (interrupt-session msg)
             "close" (close-session msg)
             "ls-sessions" (t/send transport (response-for msg :status :done
-                                                          :sessions (or (keys @sessions) [])))
+                                                          :sessions (set (keys @sessions))))
             (h msg)))))))
 
 (set-descriptor! #'session
@@ -299,7 +299,7 @@
                             {:doc "Lists the IDs of all active sessions."
                              :requires {}
                              :optional {}
-                             :returns {"sessions" "A list of all available session IDs."}}}})
+                             :returns {"sessions" "A set of all available session IDs."}}}})
 
 (defn add-stdin
   "stdin middleware.  Returns a handler that supports a \"stdin\" :op-eration, which
