@@ -106,6 +106,7 @@
                                       (<bytes to-decode))))
       #(rethrow-on-disconnection s
                                  (locking out
+                                   (spit "log.edn" (str %) :append true)
                                    (doto out
                                      (bencode/write-bencode %)
                                      .flush)))
