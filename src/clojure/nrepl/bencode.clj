@@ -299,9 +299,10 @@
   [input]
   #_(seems-to-work input)
   (->> (token-seq input)
-       (into {} (comp (partition-all 2)
-                      (map (fn [[k v]]
-                             [(string<payload k) v]))))))
+       (partition-all 2)
+       (map (fn [[k v]]
+              [(string<payload k) v]))
+       (into {})))
 
 ;; The final missing piece is `token-seq`. This a just a simple
 ;; sequence which reads tokens until the next `\e`.
