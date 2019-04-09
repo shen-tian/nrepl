@@ -289,7 +289,7 @@
     (into {}
           (comp (partition-all 2)
                 (map (fn [[k v]]
-                       (when (map? k)
+                       #_(when (map? k)
                          (spit "meh.edn" (str k) :append true)
                          (spit "meh.edn" (str tokens) :append true))
                        [(string<payload k) v])))
@@ -297,8 +297,8 @@
 
 (defn #^{:private true} read-map
   [input]
-  #_(seems-to-work input)
-  (let [tokens (token-seq input)]
+  (seems-to-work input)
+  #_(let [tokens (token-seq input)]
     (->> tokens
          (partition-all 2)
          (map (fn [[k v]] [(string<payload k) v]))
