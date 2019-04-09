@@ -289,7 +289,7 @@
     (into {}
           (comp (partition-all 2)
                 (map (fn [[k v]]
-                       #_(when (map? k)
+                       (when (map? k)
                          (spit "meh.edn" (str k) :append true)
                          (spit "meh.edn" (str tokens) :append true))
                        [(string<payload k) v])))
@@ -297,12 +297,15 @@
 
 (defn #^{:private true} read-map
   [input]
-  (seems-to-work input)
-  #_(let [tokens (token-seq input)]
-    (->> tokens
-         (partition-all 2)
-         (map (fn [[k v]] [(string<payload k) v]))
-         (into {}))))
+  (let [tokens (token-seq input)]
+    (into {}
+          (comp (partition-all 2)
+                (map (fn [[k v]]
+                       (when (map? k)
+                         (spit "meh.edn" (str k) :append true)
+                         (spit "meh.edn" (str tokens) :append true))
+                       [(string<payload k) v])))
+          tokens)))
 
 ;; The final missing piece is `token-seq`. This a just a simple
 ;; sequence which reads tokens until the next `\e`.
