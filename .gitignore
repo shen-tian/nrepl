@@ -17,6 +17,8 @@ target
 
 .externalToolBuilders
 
+log.edn
+
 /.lein*
 /.nrepl-port
 pom.xml
