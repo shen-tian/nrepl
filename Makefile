@@ -12,6 +12,9 @@ TEST_SELECTOR := :java$(JAVA_VERSION)
 test:
 	lein with-profile +$(VERSION),+test test :only nrepl.core-test/naughty-test
 
+test-2:
+	lein with-profile +$(VERSION),+test test :only nrepl.bencode-test/wot
+
 eastwood:
 	lein with-profile +$(VERSION),+eastwood eastwood
 

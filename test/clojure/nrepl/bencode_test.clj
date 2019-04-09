@@ -12,7 +12,10 @@
             [nrepl.bencode :as bencode :refer [read-bencode
                                                read-netstring
                                                write-bencode
-                                               write-netstring]])
+                                               write-netstring]]
+            [clojure.java.io :as io]
+            [clojure.edn :as edn]
+            [clojure.walk :as walk])
   (:import clojure.lang.RT
            [java.io ByteArrayInputStream ByteArrayOutputStream PushbackInputStream]))
 
@@ -196,3 +199,22 @@
                (decode :reader read-bencode)
                (get "data")
                seq)))))
+
+(deftest wot
+  (let [foo
+        (edn/read-string (slurp (io/resource "log.edn")))
+        res
+        (keep (fn [m]
+                (let [roundtrip
+                      (walk/keywordize-keys (>input
+                                             (>output m :writer write-bencode)
+                                             :reader read-bencode))
+                      norm (if (:status roundtrip)
+                             (update roundtrip :status
+                                     (fn [col]
+                                       (set (map keyword col))))
+                             roundtrip)]
+                  (if (= m norm)
+                    nil [m norm])))
+              foo)]
+    (is (= '() res))))
