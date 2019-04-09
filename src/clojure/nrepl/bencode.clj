@@ -298,11 +298,11 @@
 (defn #^{:private true} read-map
   [input]
   #_(seems-to-work input)
-  (->> (token-seq input)
-       (partition-all 2)
-       (map (fn [[k v]]
-              [(string<payload k) v]))
-       (into {})))
+  (let [tokens (token-seq input)]
+    (->> tokens
+         (partition-all 2)
+         (map (fn [[k v]] [(string<payload k) v]))
+         (into {}))))
 
 ;; The final missing piece is `token-seq`. This a just a simple
 ;; sequence which reads tokens until the next `\e`.
