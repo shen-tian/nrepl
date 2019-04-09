@@ -289,7 +289,7 @@
     (into {}
           (comp (partition-all 2)
                 (map (fn [[k v]]
-                       (when (map? k)
+                       #_(when (map? k)
                          (spit "meh.edn" (str k) :append true)
                          (spit "meh.edn" (str tokens) :append true))
                        [(string<payload k) v])))
