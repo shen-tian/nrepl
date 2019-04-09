@@ -283,7 +283,7 @@
 ;; Maps are sequences of key/value pairs. The keys are always
 ;; decoded into strings. The values are kept as is.
 
-(defn #^{:private true} read-map
+(defn seems-to-work
   [input]
   (let [tokens (token-seq input)]
     (into {}
@@ -294,6 +294,14 @@
                          (spit "meh.edn" (str tokens) :append true))
                        [(string<payload k) v])))
           tokens)))
+
+(defn #^{:private true} read-map
+  [input]
+  #_(seems-to-work input)
+  (->> (token-seq input)
+       (into {} (comp (partition-all 2)
+                      (map (fn [[k v]]
+                             [(string<payload k) v]))))))
 
 ;; The final missing piece is `token-seq`. This a just a simple
 ;; sequence which reads tokens until the next `\e`.
