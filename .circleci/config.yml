@@ -129,6 +129,8 @@ jobs:
                 command: make test-2
             - store_artifacts:
                 path: log.edn
+            - store_artifacts:
+                path: meh.edn
             - store_test_results:
                 path: test-results
 
