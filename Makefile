@@ -3,7 +3,7 @@
 VERSION ?= 1.10
 
 test:
-	lein with-profile +$(VERSION),+test test
+	lein with-profile +$(VERSION),+test,+fastlane test
 
 eastwood:
 	lein with-profile +$(VERSION),+eastwood eastwood
