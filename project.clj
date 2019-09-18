@@ -1,10 +1,10 @@
-(defproject nrepl "0.7.0-SNAPSHOT"
+(defproject nrepl "0.7.0-alpha1"
   :description "nREPL is a Clojure *n*etwork REPL."
   :url "https://nrepl.org"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :scm {:name "git" :url "https://github.com/nrepl/nrepl"}
-  :min-lein-version "2.6.1"
+  :min-lein-version "2.9.1"
   :source-paths ["src/clojure"]
   :java-source-paths ["src/java"]
   :test-paths ["test/clojure"]
@@ -43,7 +43,6 @@
                                       "https://oss.sonatype.org/content/repositories/snapshots"]]
                       :dependencies [[org.clojure/clojure "1.11.0-master-SNAPSHOT"]]}
 
-             :sysutils {:plugins [[lein-sysutils "0.2.0"]]}
              :maint {:source-paths ["src/maint"]
                      :dependencies [[org.clojure/tools.cli "0.4.1"]]}
 

@@ -101,7 +101,7 @@ the full content of message responses easily:
 ----
 => (with-open [conn (nrepl/connect :port 59258)]
      (-> (nrepl/client conn 1000)
-         (nrepl/message {:op :eval :code "(time (reduce + (range 1e6)))"})
+         (nrepl/message {:op "eval" :code "(time (reduce + (range 1e6)))"})
          doall      ;; `message` and `client-session` all return lazy seqs
          pprint))
 nil
@@ -121,4 +121,4 @@ Each message must contain at least an `:op` (or `"op"`) slot, which specifies
 the "type" of the operation to be performed.  The operations supported by an
 nREPL endpoint are determined by the handlers and middleware stack used when
 starting that endpoint; the default middleware stack (described below) supports
-a particular set of operations, <<ops.adoc,detailed here>>.
+a particular set of operations, xref:ops.adoc[detailed here].

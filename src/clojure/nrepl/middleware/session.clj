@@ -62,7 +62,7 @@
    The submitted task is made of:
    * an id (typically the message id),
    * thunk, a Runnable, the task itself,
-   * ack, another Runnable, ran to notify of succesful execution of thunk.
+   * ack, another Runnable, ran to notify of successful execution of thunk.
    The thunk/ack split is meaningful for interruptible eval: only the thunk can be interrupted."
   [id ^Runnable thunk ^Runnable ack]
   (let [^Runnable f #(do (.run thunk) (.run ack))]
@@ -157,7 +157,7 @@
    * :interrupt, takes an id and tries to interrupt the matching execution (submitted with :exec above).
      A nil id is meant to match the currently running execution. The return value can be either:
      :idle (no running execution), the interrupted id, or nil when the running id doesn't match the id argument.
-     Upon succesful interruption the backing thread is replaced.
+     Upon successful interruption the backing thread is replaced.
    * :close, terminates the backing thread."
   [id]
   (let [cl (clojure.lang.DynamicClassLoader.
@@ -165,26 +165,32 @@
         queue (LinkedBlockingQueue.)
         running (atom nil)
         thread (atom nil)
-        main-loop #(let [[exec-id ^Runnable r ^Runnable ack] (.take queue)]
-                     (reset! running exec-id)
-                     (when (try
-                             (.run r)
-                             (compare-and-set! running exec-id nil)
-                             (finally
-                               (compare-and-set! running exec-id nil)))
-                       (some-> ack .run)
-                       (recur)))
+        main-loop #(try
+                     (loop []
+                       (let [[exec-id ^Runnable r ^Runnable ack] (.take queue)]
+                         (reset! running exec-id)
+                         (when (try
+                                 (.run r)
+                                 (compare-and-set! running exec-id nil)
+                                 (finally
+                                   (compare-and-set! running exec-id nil)))
+                           (some-> ack .run)
+                           (recur))))
+                     (catch InterruptedException e))
         spawn-thread #(doto (Thread. main-loop (str "nRepl-session-" id))
                         (.setDaemon true)
                         (.setContextClassLoader cl)
                         .start)]
     (reset! thread (spawn-thread))
-    {:interrupt (fn [exec-id] ; nil means interrupt whatever is running
-                  ; returns :idle, interrupted id or nil
+    ;; This map is added to the meta of the session object by `register-session`,
+    ;; it contains functions that are accessed by `interrupt-session` and `close-session`.
+    {:interrupt (fn [exec-id]
+                  ;; nil means interrupt whatever is running
+                  ;; returns :idle, interrupted id or nil
                   (let [current @running]
                     (cond
                       (nil? current) :idle
-                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first 
+                      (and (or (nil? exec-id) (= current exec-id)) ; cas only checks identity, so check equality first
                            (compare-and-set! running current nil))
                       (do
                         (doto ^Thread @thread .interrupt .stop)
@@ -228,8 +234,10 @@
 (defn- close-session
   "Drops the session associated with the given message."
   [{:keys [session transport] :as msg}]
-  (swap! sessions dissoc (-> session meta :id))
-  (t/send transport (response-for msg :status #{:done :session-closed})))
+  (let [{:keys [close] session-id :id} (meta session)]
+    (close)
+    (swap! sessions dissoc session-id)
+    (t/send transport (response-for msg :status #{:done :session-closed}))))
 
 (defn session
   "Session middleware.  Returns a handler which supports these :op-erations:

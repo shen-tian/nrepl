@@ -23,19 +23,6 @@
      ms or if the underlying channel has been closed.")
   (send [this msg] "Sends msg. Implementations should return the transport."))
 
-;; adapted from clojure.walk to support namespaced keywords
-(defn- stringify-key
-  [k]
-  (cond
-    (and (keyword? k) (namespace k)) (str (namespace k) "/" (name k))
-    (keyword? k) (name k)
-    :else k))
-
-(defn- stringify-keys
-  [m]
-  (let [f (fn [[k v]] [(stringify-key k) v])]
-    (walk/postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) m)))
-
 (deftype FnTransport [recv-fn send-fn close]
   Transport
   (send [this msg] (send-fn msg) this)
@@ -120,7 +107,7 @@
       #(rethrow-on-disconnection s
                                  (locking out
                                    (doto out
-                                     (bencode/write-bencode (stringify-keys %))
+                                     (bencode/write-bencode %)
                                      .flush)))
       (fn []
         (if s
@@ -129,28 +116,16 @@
             (.close in)
             (.close out))))))))
 
-;; These two functions hide the fact that :op values are implemented as strings
-;; internally, whereas we aspire for them to be keywords
-
-(defn- read-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :op) (update :op name)))
-
-(defn- write-shim
-  [msg]
-  (cond-> msg
-    (contains? msg :ops) (update :ops walk/keywordize-keys)))
-
 (defn edn
   "Returns a Transport implementation that serializes messages
    over the given Socket or InputStream/OutputStream using EDN."
+  {:added "0.7.0"}
   ([^Socket s] (edn s s s))
   ([in out & [^Socket s]]
    (let [in (java.io.PushbackReader. (io/reader in))
          out (io/writer out)]
      (fn-transport
-      #(rethrow-on-disconnection s (read-shim (edn/read in)))
+      #(rethrow-on-disconnection s (edn/read in))
       #(rethrow-on-disconnection s
                                  (locking out
                                    ;; TODO: The transport doesn't seem to work
@@ -160,7 +135,7 @@
                                              *print-length*   nil
                                              *print-level*    nil]
                                      (doto out
-                                       (.write (str (write-shim %)))
+                                       (.write (str %))
                                        (.flush)))))
       (fn []
         (if s
@@ -224,6 +199,8 @@
 (defmethod uri-scheme #'bencode [_] "nrepl")
 
 (defmethod uri-scheme #'tty [_] "telnet")
+
+(defmethod uri-scheme #'edn [_] "nrepl+edn")
 
 (defmethod uri-scheme :default
   [transport]

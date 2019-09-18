@@ -29,7 +29,7 @@
 ;; A strong factor in this situation is of course the protocol which goes
 ;; over the wire. Depending on its design it might be difficult to estimate
 ;; the size of the input up front. This introduces more handling of message
-;; buffers to accomodate for inputs of varying sizes. This is particularly
+;; buffers to accommodate for inputs of varying sizes. This is particularly
 ;; difficult in languages like C, where there is no bounds checking of array
 ;; accesses and where errors might go unnoticed for considerable amount of
 ;; time.
@@ -221,7 +221,7 @@
 ;; tokens:
 ;;
 ;;  * A netstring without trailing comma for string data.
-;;  * A tag specifiyng the type of the following tokens.
+;;  * A tag specifying the type of the following tokens.
 ;;    The tag may be one of these:
 ;;     * `\i` to encode integers.
 ;;     * `\l` to encode lists of items.
@@ -385,13 +385,27 @@
   (.write output (int e)))
 
 ;; However, maps are a bit special because their keys are sorted
-;; lexicographically based on their byte string represantation.
+;; lexicographically based on their byte string representation.
 
 (declare lexicographically)
 
+(defn #^{:private true} thing>string
+  [thing]
+  (cond
+    (string? thing)
+    thing
+    (or (keyword? thing)
+        (symbol? thing))
+    (let [nspace (namespace thing)
+          name   (name thing)]
+      (str (when nspace (str nspace "/")) name))))
+
 (defmethod write-bencode :map
   [#^OutputStream output m]
-  (let [translation (into {} (map (juxt string>payload identity) (keys m)))
+  (let [translation (into {} (map (juxt (comp string>payload
+                                              thing>string)
+                                        identity)
+                                  (keys m)))
         key-strings (sort lexicographically (keys translation))
         >value      (comp m translation)]
     (.write output (int d))

@@ -19,11 +19,19 @@
     (catch Throwable t
       (log t "Unhandled REPL handler exception processing message" msg))))
 
+(defn- normalize-msg
+  "Normalize messages that are not quite in spec. This comes into effect with
+   The EDN transport, and other transports that allow more types/data structures
+   than bencode, as there's more opportunity to be out of specification."
+  [msg]
+  (cond-> msg
+    (keyword? (:op msg)) (update :op name)))
+
 (defn handle
   "Handles requests received via [transport] using [handler].
    Returns nil when [recv] returns nil for the given transport."
   [handler transport]
-  (when-let [msg (t/recv transport)]
+  (when-let [msg (normalize-msg (t/recv transport))]
     (future (handle* msg handler transport))
     (recur handler transport)))
 
@@ -71,6 +79,9 @@
   (t/send transport (response-for msg :status #{:error :unknown-op :done} :op op)))
 
 (def default-middlewares
+  "Middleware vars that are implicitly merged with any additional
+   middlewares provided to nrepl.server/default-handler."
+
   [#'nrepl.middleware/wrap-describe
    #'nrepl.middleware.interruptible-eval/interruptible-eval
    #'nrepl.middleware.load-file/wrap-load-file
