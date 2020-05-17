@@ -792,7 +792,7 @@
                                    (is (= [nil] (response-values responses)))
                                    (- (System/currentTimeMillis) start-time))))
                              sessions
-                             [2000 1000 0])]
+                             [1000 500 0])]
       (is (apply > (map deref (doall elapsed-times)))))))
 
 (def-repl-test ensure-transport-closeable
@@ -864,9 +864,9 @@
   (testing "Ensure that clients fail ASAP when the server they're connected to goes down."
     (let [resp (repl-eval client "1 2 3 4 5 6 7 8 9 10")]
       (is (= "1" (-> resp first :value)))
-      (Thread/sleep 1000)
+      (Thread/sleep 100)
       (.close *server*)
-      (Thread/sleep 1000)
+      (Thread/sleep 100)
       (try
         ;; these responses were on the wire before the remote transport was closed
         (is (> 20 (count resp)))
@@ -944,14 +944,14 @@
 
 (def-repl-test agent-await
   (is (= [42] (repl-values session (code (let [a (agent nil)]
-                                           (send a (fn [_] (Thread/sleep 1000) 42))
+                                           (send a (fn [_] (Thread/sleep 100) 42))
                                            (await a)
                                            @a))))))
 
 (deftest cloned-session-*1-binding
   (let [port (:port *server*)
         conn (nrepl/connect :port port :transport-fn *transport-fn*)
-        client (nrepl/client conn 1000)
+        client (nrepl/client conn 100)
         sess (nrepl/client-session client)
         sess-id (->> (sess {:op "eval"
                             :code "(+ 1 4)"})
